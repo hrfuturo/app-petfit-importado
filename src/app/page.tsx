@@ -1,242 +1,271 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff,
-  LogIn,
-  UserPlus,
-  Chrome,
-  Github,
-  Apple,
-  CreditCard
-} from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Eye, EyeOff, Github, Mail, User } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
-export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLogin, setIsLogin] = useState(true)
+export default function Home() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
+  const [users, setUsers] = useState([])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Carregar usuários
+  const loadUsers = async () => {
+    const { data, error } = await supabase.from("usuarios").select("*")
+    if (error) {
+      console.error("Erro ao carregar usuários:", error)
+    } else {
+      setUsers(data || [])
+    }
+  }
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  // Função de cadastro
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Lógica de autenticação aqui
-    console.log({ email, password, name })
+    setLoading(true)
+    setMessage("")
+
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .insert([{ email, senha: password, nome: name }])
+
+      if (error) {
+        setMessage("Erro ao cadastrar: " + error.message)
+      } else {
+        setMessage("Usuário cadastrado com sucesso!")
+        setEmail("")
+        setPassword("")
+        setName("")
+        loadUsers() // Recarregar lista
+      }
+    } catch (error) {
+      setMessage("Erro inesperado: " + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função de login
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage("")
+
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("email", email)
+        .eq("senha", password)
+        .single()
+
+      if (error || !data) {
+        setMessage("Email ou senha incorretos")
+      } else {
+        setMessage(`Bem-vindo, ${data.nome}!`)
+      }
+    } catch (error) {
+      setMessage("Erro ao fazer login: " + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
-            <Lock className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Bem-vindo de volta
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {isLogin ? "Entre na sua conta para continuar" : "Crie sua conta gratuitamente"}
-          </p>
-        </div>
-
-        {/* Login/Signup Card */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Formulário de Login/Cadastro */}
         <Card className="shadow-2xl border-0">
           <CardHeader>
-            <CardTitle className="text-2xl">
-              {isLogin ? "Entrar" : "Criar Conta"}
+            <CardTitle className="text-3xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center">
+              Sistema de Cadastro
             </CardTitle>
-            <CardDescription>
-              {isLogin 
-                ? "Digite suas credenciais para acessar" 
-                : "Preencha os dados para começar"}
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Pricing Banner */}
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-4 text-white shadow-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium opacity-90">Acesso Premium</p>
-                  <p className="text-2xl font-bold">R$ 29,90</p>
-                </div>
-                <CreditCard className="w-10 h-10 opacity-80" />
-              </div>
-              <p className="text-xs mt-2 opacity-90">Adquira agora e tenha acesso completo ao app</p>
-            </div>
+          <CardContent>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="signup">Cadastro</TabsTrigger>
+              </TabsList>
 
-            {/* Social Login Buttons */}
-            <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-              >
-                <Chrome className="w-5 h-5" />
-                Continuar com Google
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-              >
-                <Github className="w-5 h-5" />
-                Continuar com GitHub
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-              >
-                <Apple className="w-5 h-5" />
-                Continuar com Apple
-              </Button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-3 text-sm text-gray-500">
-                ou
-              </span>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="João Silva"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-11"
-                    required={!isLogin}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-11"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Senha</Label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                    >
-                      Esqueceu a senha?
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-11"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <TabsContent value="login">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      className="pl-10 h-11"
-                      required={!isLogin}
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="password">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Sua senha"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Entrando..." : "Entrar"}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Nome</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Seu nome completo"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-password">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Sua senha"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Cadastrando..." : "Cadastrar"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+
+            {message && (
+              <Alert className="mt-4">
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Botões de Login Social */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
                 </div>
-              )}
-
-              <Button 
-                type="submit"
-                className="w-full h-11 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-xl"
-              >
-                {isLogin ? (
-                  <>
-                    <LogIn className="w-5 h-5 mr-2" />
-                    Entrar
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Criar Conta
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {/* Toggle Login/Signup */}
-            <div className="text-center pt-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
-                <button
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold transition-colors"
-                >
-                  {isLogin ? "Criar conta" : "Entrar"}
-                </button>
-              </p>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Button variant="outline" className="w-full">
+                  <Github className="mr-2 h-4 w-4" />
+                  GitHub
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Google
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">
-          Ao continuar, você concorda com nossos{" "}
-          <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-            Termos de Uso
-          </a>{" "}
-          e{" "}
-          <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-            Política de Privacidade
-          </a>
-        </p>
+        {/* Lista de Usuários */}
+        <Card className="shadow-2xl border-0">
+          <CardHeader>
+            <CardTitle className="text-2xl bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Usuários Cadastrados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <p className="text-center text-muted-foreground">Nenhum usuário cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user: any) => (
+                  <div key={user.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <User className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <p className="font-medium">{user.nome}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Footer */}
+      <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">
+        Ao continuar, você concorda com nossos{" "}
+        <Link href="/termos" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+          Termos de Uso
+        </Link>{" "}
+        e{" "}
+        <Link href="/privacidade" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+          Política de Privacidade
+        </Link>
+      </p>
     </div>
   )
 }
