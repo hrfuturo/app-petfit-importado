@@ -12,6 +12,8 @@ import { Eye, EyeOff, Github, Mail, User } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 export default function Admin() {
+  const [ownerPassword, setOwnerPassword] = useState("")
+  const [isOwnerAuthenticated, setIsOwnerAuthenticated] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -19,6 +21,15 @@ export default function Admin() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [users, setUsers] = useState([])
+
+  // Verificar autenticação proprietário
+  const handleOwnerAuth = () => {
+    if (ownerPassword === "proprietario2024") {
+      setIsOwnerAuthenticated(true)
+    } else {
+      alert("Senha proprietário incorreta!")
+    }
+  }
 
   // Carregar usuários
   const loadUsers = async () => {
@@ -31,8 +42,10 @@ export default function Admin() {
   }
 
   useEffect(() => {
-    loadUsers()
-  }, [])
+    if (isOwnerAuthenticated) {
+      loadUsers()
+    }
+  }, [isOwnerAuthenticated])
 
   // Função de cadastro
   const handleSignUp = async (e: React.FormEvent) => {
@@ -85,6 +98,37 @@ export default function Admin() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!isOwnerAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-0">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Acesso Restrito - Proprietário
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="owner-password">Senha do Proprietário</Label>
+                <Input
+                  id="owner-password"
+                  type="password"
+                  placeholder="Digite a senha proprietário"
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleOwnerAuth} className="w-full">
+                Acessar Painel Admin
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

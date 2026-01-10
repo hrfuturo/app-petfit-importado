@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 
 export default function Home() {
@@ -8,26 +10,35 @@ export default function Home() {
           Bem-vindo ao Sistema
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-          Uma plataforma moderna e segura para gerenciamento de usuários.
+          Acesse nossa loja de aplicativos e veja nossas ofertas especiais.
         </p>
+
+        <div className="mb-8 space-x-4">
+          <Link href="/vendas" className="bg-green-600 text-white py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
+            Ver Aplicativos
+          </Link>
+          <Link href="/login" className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">
+            Fazer Login
+          </Link>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-2">Seguro</h3>
+            <h3 className="text-lg font-semibold mb-2">Aplicativos de Qualidade</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Sistema de autenticação robusto com criptografia avançada.
+              Oferecemos soluções completas e inovadoras para suas necessidades.
             </p>
           </div>
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-2">Rápido</h3>
+            <h3 className="text-lg font-semibold mb-2">Preços Acessíveis</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Interface otimizada para máxima performance.
+              Planos flexíveis que cabem no seu orçamento.
             </p>
           </div>
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-2">Confiável</h3>
+            <h3 className="text-lg font-semibold mb-2">Suporte Completo</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Dados armazenados de forma segura no Supabase.
+              Equipe dedicada para ajudar você a aproveitar ao máximo.
             </p>
           </div>
         </div>
